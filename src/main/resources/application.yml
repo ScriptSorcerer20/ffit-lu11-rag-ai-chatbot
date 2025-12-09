@@ -2,6 +2,11 @@ spring:
   application:
     name: rag-ai-chatbot
   ai:
+    openai:
+      base-url: https://openrouter.ai/api
+      chat:
+        options:
+          model: mistralai/mistral-7b-instruct:free
     transformers:
       embedding:
         enabled: true
@@ -22,5 +27,6 @@ logging:
   level:
     root: WARN
     ch.bzz.rag: DEBUG
+    ch.bzz.rag.service: DEBUG
   file:
     name: app.log
