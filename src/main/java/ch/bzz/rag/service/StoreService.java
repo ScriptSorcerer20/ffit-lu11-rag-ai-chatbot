@@ -34,7 +34,7 @@ public class StoreService {
         documents.forEach(d -> {
             Double score = d.getScore();
             String content = d.getText();
-            log.debug("Score: {}, Text: '{}'", score, content);
+            // log.debug("Score: {}, Text: '{}'", score, content);
         });
         return documents;
     }
@@ -49,15 +49,14 @@ public class StoreService {
 
     public List<String> getSourcesForNamespace(String namespaceUrl) {
         String sql = """
-            SELECT metadata->>'source' AS source
-            FROM vector_store
-            WHERE metadata->>'source' LIKE ?
-        """;
+                    SELECT metadata->>'source' AS source
+                    FROM vector_store
+                    WHERE metadata->>'source' LIKE ?
+                """;
 
         return jdbcTemplate.query(
                 sql,
                 ps -> ps.setString(1, namespaceUrl + "%"),
-                (rs, rowNum) -> rs.getString("source")
-        );
+                (rs, rowNum) -> rs.getString("source"));
     }
 }

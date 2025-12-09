@@ -26,7 +26,8 @@ public class DocumentService {
 
     public List<Document> createDocuments(String content, String source) {
         List<String> chunks = splitToChunks(content, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP);
-        // return chunks.stream().map(chunk -> createDocument(chunk, source)).toList(); // More compact form
+        // return chunks.stream().map(chunk -> createDocument(chunk, source)).toList();
+        // // More compact form
         List<Document> docs = new ArrayList<>();
         for (String chunk : chunks) {
             docs.add(createDocument(chunk, source));
@@ -40,7 +41,12 @@ public class DocumentService {
         }
         List<String> result = new ArrayList<>();
 
-        // TODO: implement logic
+        int start = 0;
+        while (start < text.length()) {
+            int end = Math.min(start + chunkSize, text.length());
+            result.add(text.substring(start, end));
+            start += (chunkSize - overlap);
+        }
 
         log.debug("Created {} chunks with chunkSize {} and overlap {}", result.size(), chunkSize, overlap);
         return result;
