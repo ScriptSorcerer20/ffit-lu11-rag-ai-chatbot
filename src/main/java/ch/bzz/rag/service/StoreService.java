@@ -33,7 +33,10 @@ public class StoreService {
         log.info("Got {} documents from vector store", documents.size());
         documents.forEach(d -> {
             String content = d.getText();
-            log.debug("Score: {}, Text: '{}'", score, content);
+            if(50 < content.length()){
+                content = content.substring(0, 50);
+            }
+            log.debug("Score: {}, Text: '{}'", d.getScore(), content);
         });
         return documents;
     }
