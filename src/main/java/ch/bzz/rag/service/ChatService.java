@@ -12,9 +12,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +27,8 @@ public class ChatService {
     private final StoreService storeService;
 
     public ChatAnswer chat(ChatMode mode, String question) {
+        log.debug("Calling chat with mode '{}' and question '{}'", mode, question);
+
         List<Document> docs = storeService.search(question, mode.getNumberOfDocuments());
         for (Document doc : docs) {
             log.debug("Using doc with id '{}' and metadata '{}'", doc.getId(), doc.getMetadata());
@@ -54,6 +54,10 @@ public class ChatService {
 
         ChatResponse result = chatModel.call(prompt);
         String answer = result.getResult().getOutput().getText();
+        answer = answer
+                .replaceAll("^<s>\\s*", "")
+                .replaceAll("\\[OUT\\]\\s*", "")
+                .trim();
         List<SourceReference> sources = resolveSources(answer, idMap);
         return new ChatAnswer(answer, sources);
     }
@@ -81,14 +85,27 @@ public class ChatService {
 
     private List<SourceReference> resolveSources(String answer, Map<String, String> idToSource) {
         Matcher matcher = DOC_ID_PATTERN.matcher(answer);
+        Map<String, Set<String>> urlToDocIds = new LinkedHashMap<>();
 
-        return matcher.results()
+        matcher.results()
                 .map(MatchResult::group)
-                .distinct()
-                .map(id -> new SourceReference(id, idToSource.get(id)))
-                .filter(ref -> ref.source() != null)
+                .forEach(docId -> {
+                    String url = idToSource.get(docId);
+                    if (url != null) {
+                        urlToDocIds
+                                .computeIfAbsent(url, k -> new LinkedHashSet<>())
+                                .add(docId);
+                    }
+                });
+
+        return urlToDocIds.entrySet().stream()
+                .map(e -> new SourceReference(
+                        e.getValue(),
+                        e.getKey()
+                ))
                 .toList();
     }
-    public record SourceReference(String id, String source) {}
+
+    public record SourceReference(Set<String> docIds, String source) {}
     public record ChatAnswer(String text, List<SourceReference> sources) {}
 }
